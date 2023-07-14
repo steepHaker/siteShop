@@ -1,0 +1,88 @@
+<section class="cart_area">
+  <div class="container">
+    <div class="cart_inner">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">Price</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in cart_items %}
+            <tr>
+              <td>
+                <div class="media">
+                  <div class="d-flex">
+                    <img src="{{ item.product.Images.url }}" alt="{{ item.product.title }}" />
+                  </div>
+                  <div class="media-body">
+                    <p>{{ item.product.title }}</p>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <h5>${{ item.product.price }}</h5>
+              </td>
+              <td>
+                <button class="remove-from-cart" data-item-id="{{ item.id }}">Удалить</button>
+              </td>
+              <td>
+                <div class="product_count">
+                  <input type="text" name="qty" id="sst" maxlength="12" value="1" title="Quantity:" class="input-text qty" />
+                  <button onclick="var result = document.getElementById('sst'); var sst = result.value; if (!isNaN(sst)) result.value++;return false;" class="increase items-count" type="button">
+                    <i class="lnr lnr-chevron-up"></i>
+                  </button>
+                  <button onclick="var result = document.getElementById('sst'); var sst = result.value; if (!isNaN(sst) &amp;&amp; sst > 0) result.value--;return false;" class="reduced items-count" type="button">
+                    <i class="lnr lnr-chevron-down"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <h5>$720.00</h5>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Получаем все элементы с классом "remove-from-cart"
+  const removeFromCartButtons = document.querySelectorAll('.remove-from-cart');
+
+  // Добавляем обработчик события клика на каждую кнопку
+  removeFromCartButtons.forEach(button => {
+    button.addEventListener('click', function(event) {
+      event.preventDefault(); // Предотвращаем переход по ссылке по умолчанию
+
+      // Получаем идентификатор элемента корзины из атрибута data-item-id
+      const itemId = this.dataset.itemId;
+
+      // Отправляем AJAX-запрос на сервер
+      fetch(`/remove-from-cart/${itemId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}' // Вставьте токен CSRF
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          // Обработка успешного ответа сервера
+          console.log(data.message); // Выводим сообщение в консоль
+          // Можно выполнить дополнительные действия, например, обновить отображение на странице
+        })
+        .catch(error => {
+          // Обработка ошибок
+          console.error('Error:', error);
+        });
+    });
+  });
+</script>
