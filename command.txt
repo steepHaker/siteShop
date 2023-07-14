@@ -1,0 +1,271 @@
+cd paradise_hotel
+py manage.py runserver
+venv\Scripts\activate.bat
+5. pip freeze проверяем правильность установки
+6. django-admin startproject mysite 
+7. py manage.py runserver
+8. ctrl c закрыть сервер
+9. py manage.py startapp и далее имя файла
+
+login admin
+Password: FytT75FbfF87
+
+
+
+
+from django.db.models import Q
+from django.views.generic import ListView, DetailView
+from django.shortcuts import  render
+from .models import  BrowseCategories, CollectionBanner, Color, Product, Category, ProductBrand, informationblock
+
+
+class HomeView(ListView):
+    model = Product
+    paginate_by = 3
+    template_name = "eister_shop/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['products_all'] = Product.objects.all()
+        context['collection_banners'] = CollectionBanner.objects.all()[:1]
+        context['information_blocks'] = informationblock.objects.all()
+        context['products'] = Product.objects.all()[:3]
+        return context
+
+class ProductView(ListView):
+    model = Product
+    template_name = "eister_shop/product.html"
+    context_object_name = 'product_info'
+    slug_url_kwarg = 'post_slug'
+
+    def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context['products_info'] = Product.objects.all()
+            context['browse_categories'] = BrowseCategories.objects.all()
+            context['brands'] = ProductBrand.objects.all()
+            context['productcolors'] = Color.objects.all()
+            context['category_name'] = Category.objects.all()
+            return context
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        category = self.request.GET.get('category')
+        brand = self.request.GET.get('brand')
+        color = self.request.GET.get('color')
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+
+        filters = Q()
+
+        if category:
+            filters &= Q(category__name=category)
+        if brand:
+            filters &= Q(productbrand__name=brand)
+        if color:
+            filters &= Q(color__name=color)
+        if min_price:
+            filters &= Q(price__gte=min_price)
+        if max_price:
+            filters &= Q(price__lte=max_price)
+
+        queryset = queryset.filter(filters)
+
+        return queryset
+    
+    
+    
+class ProductDetailView(DetailView):
+    model = Product
+    slug_url_kwarg = 'product_slug'
+    template_name = 'eister_shop/include/product_info.html'
+
+class FilteredProductView(ListView):
+    model = Product
+    template_name = "eister_shop/filtered_product.html"
+    context_object_name = 'filtered_products'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        category = self.request.GET.get('category')
+        brand = self.request.GET.get('brand')
+        color = self.request.GET.get('color')
+        min_price = self.request.GET.get('min_price')
+        max_price = self.request.GET.get('max_price')
+
+        filters = Q()
+
+        if category:
+            filters &= Q(category__name=category)
+        if brand:
+            filters &= Q(productbrand__name=brand)
+        if color:
+            filters &= Q(color__name=color)
+        if min_price:
+            filters &= Q(price__gte=min_price)
+        if max_price:
+            filters &= Q(price__lte=max_price)
+
+        queryset = queryset.filter(filters)
+
+        return queryset
+
+    
+class CardView(DetailView):
+    model = Product
+    paginate_by = 3
+    template_name = "eister_shop/card.html"
+
+    def get(self, request):
+        products = Product.objects.all()
+        return render(request, 'eister_shop/card.html', {"card": products})
+
+
+class OrderTrackingView(DetailView):
+    model = Product
+    paginate_by = 3
+    template_name = "eister_shop/order_tracking.html"
+
+    def get(self, request):
+        order_trackings = Product.objects.all()
+        return render(request, 'eister_shop/order_tracking', {"order_tracking": order_trackings})
+
+
+class ContactView(ListView):
+    model = CollectionBanner
+    paginate_by = 3
+    template_name = "eister_shop/contact.html"
+
+    def get(self, request):
+        contacts = CollectionBanner.objects.all()
+        return render(request, 'eister_shop/contact.html', {"contact": contacts})
+    
+  
+
+
+  {% extends 'base.html' %}
+
+{% block product %}
+<div class="container">
+  <div class="row flex-row-reverse">
+    <div class="col-lg-9">
+      <div class="product_top_bar">
+        <div class="left_dorp">
+          <select class="sorting">
+            <option value="1">Default sorting</option>
+            <option value="2">Default sorting 01</option>
+            <option value="4">Default sorting 02</option>
+          </select>
+          <select class="show">
+            <option value="1">Show 12</option>
+            <option value="2">Show 14</option>
+            <option value="4">Show 16</option>
+          </select>
+        </div>
+      </div>
+      <div class="latest_product_inner">
+        <div class="row">
+          {% for product in product_info %}
+          <div class="col-lg-4 col-md-6">
+            <div class="single-product">
+              <div class="product-img">
+                <a href="{{ product.Images.url }}" class="enlarge-image">
+                  <img class="img-fluid w-100" src="{{ product.Images.url }}" alt="" />
+                  <div class="overlay"></div>
+                </a>
+                <div class="p_icon">
+                  <a href="{{ product.Images.url }}" class="enlarge-image">
+                    <i class="ti-eye"></i>
+                  </a>
+                  <a href="#">
+                    <i class="ti-heart"></i>
+                  </a>
+                  <a href="{% url 'gift-card' %}">
+                    <i class="ti-shopping-cart"></i>
+                  </a>
+                </div>
+              </div>
+              <div class="product-btm">
+                <a href="{{ product.slug }}" class="d-block">
+                  <h4>{{ product.title }}</h4>
+                </a>
+                <div class="mt-3">
+                  <span class="mr-4">${{ product.price }}</span>
+                  <del>${{ product.pricewithoutdiscount }}</del>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="left_sidebar_area">
+        <form class="left_widgets p_filter_widgets" method="GET" action="{% url 'product' %}">
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Browse Categories</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="category">
+                <option value="">All Categories</option>
+                {% for category in browse_categories %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+        
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Product Brand</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="brand">
+                <option value="">All Brands</option>
+                {% for brand in brands %}
+                <option value="{{ brand.name }}">{{ brand.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+        
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Color Filter</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="color">
+                <option value="">All Colors</option>
+                {% for color in productcolors %}
+                <option value="{{ color.name }}">{{ color.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+          
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Price Filter</h3>
+            </div>
+            <div class="widgets_inner">
+              <div class="range_item">
+                <div id="slider-range"></div>
+                <div class="">
+                  <input type="number" id="min_price" name="min_price" step="1" placeholder="Min Price" value="{{ request.GET.min_price }}">
+                  <input type="number" id="max_price" name="max_price" step="1" placeholder="Max Price" value="{{ request.GET.max_price }}">
+                  <div><button class="mt-40" type="submit">Filter</button></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </form> 
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+{% endblock product %}
