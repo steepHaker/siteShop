@@ -152,6 +152,7 @@ cython_debug/
 #.idea/
 
 ziser
-static
+
 media
 shop/eiser_shop/migrations
+siteShop\shop\static\img
