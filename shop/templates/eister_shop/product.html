@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block product %}
+<div class="container">
+  <div class="row flex-row-reverse">
+    <div class="col-lg-9">
+      <div class="product_top_bar">
+        <div class="left_dorp">
+          <select class="sorting">
+            <option value="1">Default sorting</option>
+            <option value="2">Default sorting 01</option>
+            <option value="4">Default sorting 02</option>
+          </select>
+          <select class="show">
+            <option value="1">Show 12</option>
+            <option value="2">Show 14</option>
+            <option value="4">Show 16</option>
+          </select>
+        </div>
+      </div>
+      <div class="latest_product_inner">
+        <div class="row">
+          {% for product in product_info %}
+          <div class="col-lg-4 col-md-6">
+            <div class="single-product">
+              <div class="product-img">
+                <a href="{{ product.Images.url }}" class="enlarge-image">
+                  <img class="img-fluid w-100" src="{{ product.Images.url }}" alt="" />
+                  <div class="overlay"></div>
+                </a>
+                <div class="p_icon">
+                  <a href="{{ product.Images.url }}" class="enlarge-image">
+                    <i class="ti-eye"></i>
+                  </a>
+                
+                  <a class="add-to-favorites"  href="{% url 'add_to_favorites' product_id=product.id %}">
+                    <i class="ti-heart"></i>
+                  </a>
+                
+                  <a href="#"data-product-id="{{ product.id }}">
+                    <i class="ti-shopping-cart"></i>
+                  </a>
+                </div>
+                  
+                  
+                
+              </div>
+              <div class="product-btm">
+                <a href="{{ product.slug }}" class="d-block">
+                  <h4>{{ product.title }}</h4>
+                </a>
+                <div class="mt-3">
+                  <span class="mr-4">${{ product.price }}</span>
+                  <del>${{ product.pricewithoutdiscount }}</del>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="left_sidebar_area">
+        <form class="left_widgets p_filter_widgets" method="GET" action="{% url 'product' %}">
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Browse Categories</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="category">
+                <option value="">All Categories</option>
+                {% for category in browse_categories %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+        
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Product Brand</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="brand">
+                <option value="">All Brands</option>
+                {% for brand in brands %}
+                <option value="{{ brand.name }}">{{ brand.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+        
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Color Filter</h3>
+            </div>
+            <div class="widgets_inner">
+              <select name="color">
+                <option value="">All Colors</option>
+                {% for color in productcolors %}
+                <option value="{{ color.name }}">{{ color.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </aside>
+          
+          <aside class="left_widgets p_filter_widgets">
+            <div class="l_w_title">
+              <h3>Price Filter</h3>
+            </div>
+            <div class="widgets_inner">
+              <div class="range_item">
+                <div id="slider-range"></div>
+                <div class="">
+                  <input type="number" id="min_price" name="min_price" step="1" placeholder="Min Price" value="{{ request.GET.min_price }}">
+                  <input type="number" id="max_price" name="max_price" step="1" placeholder="Max Price" value="{{ request.GET.max_price }}">
+                  <div><button class="mt-40" type="submit">Filter</button></div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </form> 
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<script>
+  // Получаем все элементы с классом "add-to-favorites"
+  const addToFavoritesButtons = document.querySelectorAll('.add-to-favorites');
+
+  // Добавляем обработчик события клика на каждую кнопку
+  addToFavoritesButtons.forEach(button => {
+    button.addEventListener('click', function(event) {
+      event.preventDefault(); // Предотвращаем переход по ссылке по умолчанию
+
+      // Получаем идентификатор продукта из атрибута data-product-id
+      const productId = this.dataset.productId;
+
+      // Отправляем AJAX-запрос на сервер
+      fetch(`/add-to-favorites/${productId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_exempt }}' // Вставьте токен CSRF
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          // Обработка успешного ответа сервера
+          console.log(data.message); // Выводим сообщение в консоль
+          // Можно выполнить дополнительные действия, например, обновить отображение на странице
+        })
+        .catch(error => {
+          // Обработка ошибок
+          console.error('Error:', error);
+        });
+    });
+  });
+</script>
+
+{% endblock product %}
+
